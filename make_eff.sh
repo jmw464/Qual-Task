@@ -7,8 +7,7 @@
 #SBATCH --error=jobs/eff_%j.err
 #SBATCH --output=jobs/eff_%j.out
 
-DATASET=zp
-WP=0.85
-XVAR=eta
+WP=0.60 #choose between 0.60, 0.70, 0.77 and 0.85
+XVAR=eta #choose between pt_high, pt_low and eta
 
-python scripts/compute_efficiencies.py -d ${DATASET} -w ${WP} -v ${XVAR}
+python scripts/compute_efficiencies.py -w ${WP} -v ${XVAR}

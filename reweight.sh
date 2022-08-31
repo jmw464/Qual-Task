@@ -7,6 +7,4 @@
 #SBATCH --error=jobs/eff_%j.err
 #SBATCH --output=jobs/eff_%j.out
 
-DATASET=ttbar
-
-python scripts/find_reweighting_com.py -d ${DATASET}
+python scripts/find_reweighting.py

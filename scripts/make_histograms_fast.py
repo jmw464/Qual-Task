@@ -4,16 +4,13 @@ import os,sys,math,glob,ROOT
 import numpy as np
 from ROOT import gROOT, TFile, TH1D, TLorentzVector, TCanvas, TTree, gDirectory, TChain, TH2D
 
-#set ATLAS style for plots
-gROOT.LoadMacro("/global/homes/j/jmw464/ATLAS/Vertex-GNN/scripts/include/AtlasStyle.C")
-gROOT.LoadMacro("/global/homes/j/jmw464/ATLAS/Vertex-GNN/scripts/include/AtlasLabels.C")
-from ROOT import SetAtlasStyle
-
 from plot_functions import *
+import options
 
-
-jet_flavors = "all" #select b, c or l if desired (anything else will run all jets)
-files = "zp"
+#set ATLAS style for plots
+gROOT.LoadMacro(options.atlasstyle_dir+"AtlasStyle.C")
+gROOT.LoadMacro(options.atlasstyle_dir+"AtlasLabels.C")
+from ROOT import SetAtlasStyle
 
 
 def calc_LLR(num, denom):
@@ -29,25 +26,22 @@ def main(argv):
     gROOT.SetBatch(True)
     SetAtlasStyle()
 
-    indir = "/global/cfs/cdirs/atlas/jmw464/qual_data/"
-    outdir = "/global/homes/j/jmw464/ATLAS/Qual-Task/output/"
+    indir = options.indir
+    outdir = options.outdir
+    jet_flavors = options.jet_flavors
+    files = options.dataset
+
     treename = "bTag_AntiKt4EMPFlowJets_BTagging201903"
 
     if files == "ttbar":
-        nomdir = "user.jmwagner.410470.qual_tt_nom_10_Akt4EMPf_BTagging201903/"
-        ovdir = "user.jmwagner.410470.qual_tt_ov_3_Akt4EMPf_BTagging201903/"
-        ibldir = "user.jmwagner.410470.qual_tt_ibl_4_Akt4EMPf_BTagging201903/"
-        pp0dir = "user.jmwagner.410470.qual_tt_pp0_3_Akt4EMPf_BTagging201903/"
+        dataset_string = "t#bar{t}"
     elif files == "zp":
-        nomdir = "user.jmwagner.800030.qual_zp_nom_10_Akt4EMPf_BTagging201903/"
-        ovdir = "user.jmwagner.800030.qual_zp_ov_3_Akt4EMPf_BTagging201903/"
-        ibldir = "user.jmwagner.800030.qual_zp_ibl_3_Akt4EMPf_BTagging201903/"
-        pp0dir = "user.jmwagner.800030.qual_zp_pp0_3_Akt4EMPf_BTagging201903/"
+        dataset_string = "Z'"
 
-    nomfiles = glob.glob(indir+nomdir+'*')
-    ovfiles = glob.glob(indir+ovdir+'*')
-    iblfiles = glob.glob(indir+ibldir+'*')
-    pp0files = glob.glob(indir+pp0dir+'*')
+    nomfiles = glob.glob(indir+"Nominal/"+'*')
+    ovfiles = glob.glob(indir+"Overall/"+'*')
+    iblfiles = glob.glob(indir+"IBL/"+'*')
+    pp0files = glob.glob(indir+"PP0/"+'*')
 
     nomchain = TChain(treename)
     ovchain = TChain(treename)
@@ -426,12 +420,16 @@ def main(argv):
 
         if jet_flavors == 'b':
             flavorcut = "&&jet_LabDr_HadF==5"
+            appendix = '_b'
         elif jet_flavors == 'c':
             flavorcut = "&&jet_LabDr_HadF==4"
+            appendix = '_c'
         elif jet_flavors == 'l':
             flavorcut = "&&jet_LabDr_HadF!=4&&jet_LabDr_HadF!=5"
+            appendix = '_l'
         else:
             flavorcut = ""
+            appendix = ""
         cut = "jet_pt>20e3&&fabs(jet_eta)<2.5"+flavorcut
 
         chain.Draw("jet_trk_pt*0.001>>"+prefix+"_pt",cut,"goff")
@@ -499,67 +497,67 @@ def main(argv):
     for hist in evnjet_histlist:
         print(hist.GetEntries())
 
-    plot_hist(canv1, qoverp_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_qoverp.png')
-    plot_hist(canv1, d0_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_d0.png')
-    plot_hist(canv1, z0_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_z0.png')
-    plot_hist(canv1, pt_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_pt.png')
-    plot_hist(canv1, d0s_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_d0s.png')
-    plot_hist(canv1, d0sign_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_d0sign.png')
-    plot_hist(canv1, z0s_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_z0s.png')
-    plot_hist(canv1, z0sign_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_z0sign.png')
-    plot_hist(canv1, nPixHits_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nPixHits.png')
-    plot_hist(canv1, nSCTHits_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nSCTHits.png')
-    plot_hist(canv1, nBLHits_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nBLHits.png')
-    plot_hist(canv1, nPixHoles_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nPixHoles.png')
-    plot_hist(canv1, nSCTHoles_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nSCTHoles.png')
-    plot_hist(canv1, nPixShared_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nPixShared.png')
-    plot_hist(canv1, nSCTShared_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nSCTShared.png')
-    plot_hist(canv1, nBLShared_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nBLShared.png')
-    plot_hist(canv1, nPixSplit_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nPixSplit.png')
-    plot_hist(canv1, nBLSplit_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nBLSplit.png')
-    plot_hist(canv1, jetpt_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jetpt.png')
-    plot_hist(canv1, jeteta_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jeteta.png')
-    plot_hist(canv1, jetntrk_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jetntrk.png')
-    plot_hist(canv1, evnjet_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_evnjet.png')
-    plot_hist(canv1, ip3dLLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_ip3dLLbl.png')
-    plot_hist(canv1, ip3dLLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_ip3dLLbc.png')
-    plot_hist(canv1, ip3dLLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_ip3dLLcl.png')
-    plot_hist(canv1, rnnipLLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_rnnipLLbl.png')
-    plot_hist(canv1, rnnipLLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_rnnipLLbc.png')
-    plot_hist(canv1, rnnipLLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_rnnipLLcl.png')
-    plot_hist(canv1, dl1LLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_dl1LLbl.png')
-    plot_hist(canv1, dl1LLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_dl1LLbc.png')
-    plot_hist(canv1, dl1LLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_dl1LLcl.png')
-    plot_hist(canv1, dl1rLLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_dl1rLLbl.png')
-    plot_hist(canv1, dl1rLLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_dl1rLLbc.png')
-    plot_hist(canv1, dl1rLLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_dl1rLLcl.png')
-    plot_hist(canv1, jfLLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfLLbl.png')
-    plot_hist(canv1, jfLLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfLLbc.png')
-    plot_hist(canv1, jfLLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfLLcl.png')
-    plot_hist(canv1, jfm_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfm.png')
-    plot_hist(canv1, jffe_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jffe.png')
-    plot_hist(canv1, jfntrkatvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfntrkatvtx.png')
-    plot_hist(canv1, jfn1trkvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfn1trkvtx.png')
-    plot_hist(canv1, jfn2trkvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfn2trkvtx.png')
-    plot_hist(canv1, jfsxyz_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfsxyz.png')
-    plot_hist(canv1, jfdeltaR_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfdeltaR.png')
-    plot_hist(canv1, jfnvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_jfnvtx.png')
-    plot_hist(canv1, sv1m_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1m.png')
-    plot_hist(canv1, sv1fe_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1fe.png')
-    plot_hist(canv1, sv1ntrkatvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1ntrkatvtx.png')
-    plot_hist(canv1, sv1n2trkvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1n2trkvtx.png')
-    plot_hist(canv1, sv1lxy_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1lxy.png')
-    plot_hist(canv1, sv1lxyz_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1lxyz.png')
-    plot_hist(canv1, sv1sxyz_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1sxyz.png')
-    plot_hist(canv1, sv1deltaR_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1deltaR.png')
-    plot_hist(canv1, sv1nvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_sv1nvtx.png')
-    plot_hist(canv1, bhadptfrac_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_bhadptfrac.png')
-    plot_hist(canv1, nosecs_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, False, True, outdir+'hist_nosecs.png')
+    plot_hist(canv1, qoverp_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_qoverp'+appendix+''+appendix+'.pdf')
+    plot_hist(canv1, d0_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_d0'+appendix+'.pdf')
+    plot_hist(canv1, z0_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_z0'+appendix+'.pdf')
+    plot_hist(canv1, pt_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_pt'+appendix+'.pdf')
+    plot_hist(canv1, d0s_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_d0s'+appendix+'.pdf')
+    plot_hist(canv1, d0sign_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_d0sign'+appendix+'.pdf')
+    plot_hist(canv1, z0s_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_z0s'+appendix+'.pdf')
+    plot_hist(canv1, z0sign_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_z0sign'+appendix+'.pdf')
+    plot_hist(canv1, nPixHits_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nPixHits'+appendix+'.pdf')
+    plot_hist(canv1, nSCTHits_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nSCTHits'+appendix+'.pdf')
+    plot_hist(canv1, nBLHits_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nBLHits'+appendix+'.pdf')
+    plot_hist(canv1, nPixHoles_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nPixHoles'+appendix+'.pdf')
+    plot_hist(canv1, nSCTHoles_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nSCTHoles'+appendix+'.pdf')
+    plot_hist(canv1, nPixShared_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nPixShared'+appendix+'.pdf')
+    plot_hist(canv1, nSCTShared_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nSCTShared'+appendix+'.pdf')
+    plot_hist(canv1, nBLShared_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nBLShared'+appendix+'.pdf')
+    plot_hist(canv1, nPixSplit_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nPixSplit'+appendix+'.pdf')
+    plot_hist(canv1, nBLSplit_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nBLSplit'+appendix+'.pdf')
+    plot_hist(canv1, jetpt_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jetpt'+appendix+'.pdf')
+    plot_hist(canv1, jeteta_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jeteta'+appendix+'.pdf')
+    plot_hist(canv1, jetntrk_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jetntrk'+appendix+'.pdf')
+    plot_hist(canv1, evnjet_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_evnjet'+appendix+'.pdf')
+    plot_hist(canv1, ip3dLLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_ip3dLLbl'+appendix+'.pdf')
+    plot_hist(canv1, ip3dLLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_ip3dLLbc'+appendix+'.pdf')
+    plot_hist(canv1, ip3dLLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_ip3dLLcl'+appendix+'.pdf')
+    plot_hist(canv1, rnnipLLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_rnnipLLbl'+appendix+'.pdf')
+    plot_hist(canv1, rnnipLLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_rnnipLLbc'+appendix+'.pdf')
+    plot_hist(canv1, rnnipLLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_rnnipLLcl'+appendix+'.pdf')
+    plot_hist(canv1, dl1LLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_dl1LLbl'+appendix+'.pdf')
+    plot_hist(canv1, dl1LLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_dl1LLbc'+appendix+'.pdf')
+    plot_hist(canv1, dl1LLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_dl1LLcl'+appendix+'.pdf')
+    plot_hist(canv1, dl1rLLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_dl1rLLbl'+appendix+'.pdf')
+    plot_hist(canv1, dl1rLLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_dl1rLLbc'+appendix+'.pdf')
+    plot_hist(canv1, dl1rLLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_dl1rLLcl'+appendix+'.pdf')
+    plot_hist(canv1, jfLLbl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfLLbl'+appendix+'.pdf')
+    plot_hist(canv1, jfLLbc_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfLLbc'+appendix+'.pdf')
+    plot_hist(canv1, jfLLcl_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfLLcl'+appendix+'.pdf')
+    plot_hist(canv1, jfm_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfm'+appendix+'.pdf')
+    plot_hist(canv1, jffe_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jffe'+appendix+'.pdf')
+    plot_hist(canv1, jfntrkatvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfntrkatvtx'+appendix+'.pdf')
+    plot_hist(canv1, jfn1trkvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfn1trkvtx'+appendix+'.pdf')
+    plot_hist(canv1, jfn2trkvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfn2trkvtx'+appendix+'.pdf')
+    plot_hist(canv1, jfsxyz_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfsxyz'+appendix+'.pdf')
+    plot_hist(canv1, jfdeltaR_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfdeltaR'+appendix+'.pdf')
+    plot_hist(canv1, jfnvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_jfnvtx'+appendix+'.pdf')
+    plot_hist(canv1, sv1m_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1m'+appendix+'.pdf')
+    plot_hist(canv1, sv1fe_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1fe'+appendix+'.pdf')
+    plot_hist(canv1, sv1ntrkatvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1ntrkatvtx'+appendix+'.pdf')
+    plot_hist(canv1, sv1n2trkvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1n2trkvtx'+appendix+'.pdf')
+    plot_hist(canv1, sv1lxy_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1lxy'+appendix+'.pdf')
+    plot_hist(canv1, sv1lxyz_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1lxyz'+appendix+'.pdf')
+    plot_hist(canv1, sv1sxyz_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1sxyz'+appendix+'.pdf')
+    plot_hist(canv1, sv1deltaR_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1deltaR'+appendix+'.pdf')
+    plot_hist(canv1, sv1nvtx_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_sv1nvtx'+appendix+'.pdf')
+    plot_hist(canv1, bhadptfrac_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_bhadptfrac'+appendix+'.pdf')
+    plot_hist(canv1, nosecs_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, False, True, outdir+'hist_nosecs'+appendix+'.pdf')
 
     canv2 = TCanvas("c2", "c2", 800, 600)
-    plot_2dhist_ratio(canv2, ov_d0sz0s_hist, nom_d0sz0s_hist, 'overall', outdir+'2dhist_ipsig_ov.png')
-    plot_2dhist_ratio(canv2, ibl_d0sz0s_hist, nom_d0sz0s_hist, 'ibl', outdir+'2dhist_ipsig_ibl.png')
-    plot_2dhist_ratio(canv2, pp0_d0sz0s_hist, nom_d0sz0s_hist, 'pp0', outdir+'2dhist_ipsig_pp0.png')
+    plot_2dhist_ratio(canv2, ov_d0sz0s_hist, nom_d0sz0s_hist, 'overall', outdir+'2dhist_ipsig_ov'+appendix+'.pdf')
+    plot_2dhist_ratio(canv2, ibl_d0sz0s_hist, nom_d0sz0s_hist, 'ibl', outdir+'2dhist_ipsig_ibl'+appendix+'.pdf')
+    plot_2dhist_ratio(canv2, pp0_d0sz0s_hist, nom_d0sz0s_hist, 'pp0', outdir+'2dhist_ipsig_pp0'+appendix+'.pdf')
 
 
 if __name__ == '__main__':

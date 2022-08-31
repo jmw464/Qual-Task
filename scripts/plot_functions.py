@@ -23,7 +23,7 @@ def find_minmax(histlist):
     return maximum, minimum
 
 
-def plot_hist(canv, hist_list, labellist, ratioindex, log, norm, filename):
+def plot_hist(canv, hist_list, labellist, ratioindex, dataset_string, log, norm, filename):
     gStyle.SetOptStat(0)
 
     pad1 = TPad("pad1", "pad1", 0.05,0.35,1.0,1.0)
@@ -41,9 +41,11 @@ def plot_hist(canv, hist_list, labellist, ratioindex, log, norm, filename):
     legend = TLegend(0.75-0.15*(math.ceil(len(hist_list)/3)-1),0.76,0.9,0.92,'','NDC')
     legend.SetNColumns(math.ceil(len(hist_list)/3))
     logo = TLatex(0.2,0.88, "#bf{#it{ATLAS}} #it{Internal}")
-    add_text = TLatex(0.2,0.83,"p_{T} > 20 GeV, |#eta| < 2.5")
+    add_text = TLatex(0.2,0.80,"p_{T} > 20 GeV, |#eta| < 2.5")
+    dataset_text = TLatex(0.2,0.72,dataset_string)
     logo.SetNDC(True)
     add_text.SetNDC(True)
+    dataset_text.SetNDC(True)
 
     #normalize histograms
     if norm:
@@ -85,6 +87,7 @@ def plot_hist(canv, hist_list, labellist, ratioindex, log, norm, filename):
     legend.Draw("SAME")
     logo.Draw("SAME")
     add_text.Draw("SAME")
+    dataset_text.Draw("SAME")
 
     pad2.cd()
     
@@ -118,7 +121,7 @@ def plot_hist(canv, hist_list, labellist, ratioindex, log, norm, filename):
     canv.Clear()
 
 
-def plot_profile(canv, profile_list, labellist, ratioindex, wp, filename):
+def plot_profile(canv, profile_list, labellist, ratioindex, dataset_string, filename):
     gStyle.SetOptStat(0)
     gStyle.SetErrorX(.5)
 
@@ -136,11 +139,11 @@ def plot_profile(canv, profile_list, labellist, ratioindex, wp, filename):
     legend = TLegend(0.75-0.15*(math.ceil(len(profile_list)/3)-1),0.76,0.9,0.92,'','NDC')
     legend.SetNColumns(math.ceil(len(profile_list)/3))
     logo = TLatex(0.2,0.88, "#bf{#it{ATLAS}} #it{Internal}")
-    cut_text = TLatex(0.2,0.81,"p_{T} > 20 GeV, |#eta| < 2.5")
-    wp_text = TLatex(0.2,0.74,"WP = "+str(wp))
+    cut_text = TLatex(0.2,0.80,"p_{T} > 20 GeV, |#eta| < 2.5")
+    dataset_text = TLatex(0.2,0.72,dataset_string)
     logo.SetNDC(True)
     cut_text.SetNDC(True)
-    wp_text.SetNDC(True)
+    dataset_text.SetNDC(True)
 
     maximum = max([profile.GetMaximum() for profile in profile_list])
     minimum = min([profile.GetMinimum() for profile in profile_list])
@@ -166,7 +169,7 @@ def plot_profile(canv, profile_list, labellist, ratioindex, wp, filename):
     legend.Draw("SAME")
     logo.Draw("SAME")
     cut_text.Draw("SAME")
-    wp_text.Draw("SAME")
+    dataset_text.Draw("SAME")
 
     pad2.cd()
 

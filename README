@@ -1,0 +1,42 @@
+This collection of scripts was used to investigate the impact of tracking uncertainties on flavor tagging algorithms as part of my (Johannes Wagner) qualification task for the ATLAS collaboration (JIRA: https://its.cern.ch/jira/browse/AFT-563)
+
+These scripts are to be used in conjunction with the FlavourTagPerformanceFramework used in rel 21, with which all input files need to be processed: https://gitlab.cern.ch/atlas-flavor-tagging-tools/FlavourTagPerformanceFramework
+In general, each script requires four sets of input files (one nominal set and the three relevant material variations). The input and output directories can be set in the "options.py" file. The input directory is expected to contain "Nominal", "Overall", "IBL" and "PP0" subdirectories with the corresponding files. Samples need to be specified as either ttbar or Z' in order for the code to work out of the box (this is because the histogram binning is only defined for these samples since no others were used for this QT).
+
+A summary of all files in this repository is given below:
+
+###############################
+#          options.py         #
+###############################
+
+Exists as a configuration file for additional options beyond the command line arguments for each script in this repository. Some variables are shared between multiple scripts while some are unique to individual ones (this is specified below). This needs to be edited by each user to at least set the correct input/output directories.
+
+###############################
+#      plot_functions.py      #
+###############################
+
+Helper file containing plotting functions used in all scripts. Shouldn't need to be edited except to change the style of output plots.
+
+###############################
+#   make_histograms_fast.py   #
+###############################
+
+Generates histograms comparing tracking variables in the nominal sample to each material variation. Does not include histograms with z0/d0/qoverp smearing/biasing. Requires five variables defined and explained in "options.py" (atlasstyle_dir, indir, outdir, dataset and jet_flavors). Can be run with "python scripts/make_histograms_fast.py". Plots are dumped in specified output directory.
+
+###############################
+#   make_histograms_syst.py   #
+###############################
+
+Generates histograms comparing d0, z0 and qoverp between the nominal sample, the material varied samples and applied IP/qoverp smearing/biasing according to the tracking CP recommendations. Functionally this script is identical to "make_histograms_fast.py" except that it assumes the existence of additional subdirectories in the input directory "IPSmear", "IPBias" and "QPBias" filled with files where IP smearning/biasing and qoverp biasing was applied. This is not done within this codebase but rather via a modified version of the FlavourTagPerformanceFramework found here: https://gitlab.cern.ch/jmwagner/FlavourTagPerformanceFramework. Tracking CP systematics are automatically applied in this version of it and resulting smeared or biased IP and qoverp variables are written into "jet_trk_d0_sys", "jet_trk_z0_sys" and "jet_trk_qoverp_sys". The exact systematics for each run must be set in "btagAnalysis/src/btagAnalysisAlg.cxx". This file must be modified since IP smearing, IP biasing and qoverp biasing need to be applied in separate runs.
+
+###############################
+#   compute_efficiencies.py   #
+###############################
+
+Generates FTAG efficiency plots showing DL1 and DL1r b, c and light-jet efficiency for each of the material variations. Requires two command line arguments (DL1/DL1r efficiency working point -w and relevant x-axis variable -v) as well as six variables defined and explained in "options.py" (atlasstyle_dir, indir, outdir, dataset, fc_dl1 and fc_dl1r). Can be run with "make_eff.sh". Plots are dumped in specified output directory.
+
+###############################
+#     find_reweighting.py     #
+###############################
+
+This script applies the reweighting procedure designed to match DL1 score distributions between the nominal and alternative geometry samples. It performs a Chi2 test between each set of histograms for a list of reweighting factors and produces output plots showcasing the results of the reweighting. Requires seven variables defined and explained in "options.py" (atlasstyle_dir, indir, outdir, dataset, jet_flavors, fc_dl1 and fc_dl1r). Can be run with "reweight.sh". Plots are dumped in specified output directory.

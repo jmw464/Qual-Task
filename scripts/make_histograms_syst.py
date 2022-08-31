@@ -4,15 +4,13 @@ import os,sys,math,glob,ROOT
 import numpy as np
 from ROOT import gROOT, TFile, TH1D, TLorentzVector, TCanvas, TTree, gDirectory, TChain, TH2D
 
-#set ATLAS style for plots
-gROOT.LoadMacro("/global/homes/j/jmw464/ATLAS/Vertex-GNN/scripts/include/AtlasStyle.C")
-gROOT.LoadMacro("/global/homes/j/jmw464/ATLAS/Vertex-GNN/scripts/include/AtlasLabels.C")
-from ROOT import SetAtlasStyle
-
 from plot_functions import *
+import options
 
-
-jet_flavors = "incl" #select b, c or l if desired (anything else will run all jets)
+#set ATLAS style for plots
+gROOT.LoadMacro(options.atlasstyle_dir+"AtlasStyle.C")
+gROOT.LoadMacro(options.atlasstyle_dir+"AtlasLabels.C")
+from ROOT import SetAtlasStyle
 
 
 def calc_LLR(num, denom):
@@ -28,35 +26,25 @@ def main(argv):
     gROOT.SetBatch(True)
     SetAtlasStyle()
 
-    indir = "/global/cfs/cdirs/atlas/jmw464/qual_data/"
-    outdir = "/global/homes/j/jmw464/ATLAS/Qual-Task/output/"
+    indir = options.indir
+    outdir = options.outdir
+    jet_flavors = options.jet_flavors
+    files = options.dataset
+
     treename = "bTag_AntiKt4EMPFlowJets_BTagging201903"
-    files = "ttbar"
 
     if files == "ttbar":
-        nomdir = "user.jmwagner.410470.qual_tt_nom_10_Akt4EMPf_BTagging201903/"
-        ovdir = "user.jmwagner.410470.qual_tt_ov_3_Akt4EMPf_BTagging201903/"
-        ibldir = "user.jmwagner.410470.qual_tt_ibl_4_Akt4EMPf_BTagging201903/"
-        pp0dir = "user.jmwagner.410470.qual_tt_pp0_3_Akt4EMPf_BTagging201903/"
-        ipbiasdir = "user.jmwagner.410470.qual_tt_nom_7_Akt4EMPf_BTagging201903/"
-        ipsmeardir = "user.jmwagner.410470.qual_tt_nom_8_Akt4EMPf_BTagging201903/"
-        qpbiasdir = "user.jmwagner.410470.qual_tt_nom_9_Akt4EMPf_BTagging201903/"
+        dataset_string = "t#bar{t}"
     elif files == "zp":
-        nomdir = "user.jmwagner.800030.qual_zp_nom_10_Akt4EMPf_BTagging201903/"
-        ovdir = "user.jmwagner.800030.qual_zp_ov_3_Akt4EMPf_BTagging201903/"
-        ibldir = "user.jmwagner.800030.qual_zp_ibl_3_Akt4EMPf_BTagging201903/"
-        pp0dir = "user.jmwagner.800030.qual_zp_pp0_3_Akt4EMPf_BTagging201903/"
-        ipbiasdir = "user.jmwagner.800030.qual_zp_nom_6_Akt4EMPf_BTagging201903/"
-        ipsmeardir = "user.jmwagner.800030.qual_zp_nom_7_Akt4EMPf_BTagging201903/"
-        qpbiasdir = "user.jmwagner.800030.qual_zp_nom_8_Akt4EMPf_BTagging201903/"
+        dataset_string = "Z'"
 
-    nomfiles = glob.glob(indir+nomdir+'*')
-    ovfiles = glob.glob(indir+ovdir+'*')
-    iblfiles = glob.glob(indir+ibldir+'*')
-    pp0files = glob.glob(indir+pp0dir+'*')
-    ipbiasfiles = glob.glob(indir+ipbiasdir+'*')
-    ipsmearfiles = glob.glob(indir+ipsmeardir+'*')
-    qpbiasfiles = glob.glob(indir+qpbiasdir+'*')
+    nomfiles = glob.glob(indir+"Nominal/"+'*')
+    ovfiles = glob.glob(indir+"Overall/"+'*')
+    iblfiles = glob.glob(indir+"IBL/"+'*')
+    pp0files = glob.glob(indir+"PP0/"+'*')
+    ipbiasdir = glob.glob(indir+"IPSmear/"+'*')
+    ipbiasdir = glob.glob(indir+"IPBias/"+'*')
+    qpbiasdir = glob.glob(indir+"QPBias/"+'*')
 
     nomchain = TChain(treename)
     ovchain = TChain(treename)
@@ -139,9 +127,9 @@ def main(argv):
         
     canv1 = TCanvas("c1", "c1",200,10,900,900)
 
-    plot_hist(canv1, qoverp_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal', 'biasing'], 3, False, True, outdir+'hist_qoverp.png')
-    plot_hist(canv1, d0_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal', 'biasing', 'smearing'], 3, False, True, outdir+'hist_d0.png')
-    plot_hist(canv1, z0_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal', 'biasing', 'smearing'], 3, False, True, outdir+'hist_z0.png')
+    plot_hist(canv1, qoverp_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal', 'biasing'], 3, dataset_string, False, True, outdir+'hist_qoverp_syst.pdf')
+    plot_hist(canv1, d0_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal', 'biasing', 'smearing'], 3, dataset_string, False, True, outdir+'hist_d0_syst.pdf')
+    plot_hist(canv1, z0_histlist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal', 'biasing', 'smearing'], 3, dataset_string, False, True, outdir+'hist_z0_syst.pdf')
 
 
 if __name__ == '__main__':

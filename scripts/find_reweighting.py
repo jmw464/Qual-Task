@@ -7,26 +7,31 @@ import argparse
 import matplotlib.pyplot as plt
 from ROOT import gROOT, TFile, TH1D, TLorentzVector, TCanvas, TTree, gDirectory, TChain, TH2D, gPad
 
-#set ATLAS style for plots
-gROOT.LoadMacro("/global/homes/j/jmw464/ATLAS/Vertex-GNN/scripts/include/AtlasStyle.C")
-gROOT.LoadMacro("/global/homes/j/jmw464/ATLAS/Vertex-GNN/scripts/include/AtlasLabels.C")
-from ROOT import SetAtlasStyle
-
 from plot_functions import *
+import options
+
+#set ATLAS style for plots
+gROOT.LoadMacro(options.atlasstyle_dir+"AtlasStyle.C")
+gROOT.LoadMacro(options.atlasstyle_dir+"AtlasLabels.C")
+from ROOT import SetAtlasStyle
 
 
 def main(argv):
     gROOT.SetBatch(True)
     SetAtlasStyle()
 
-    indir = "/global/cfs/cdirs/atlas/jmw464/qual_data/"
-    outdir = "/global/homes/j/jmw464/ATLAS/Qual-Task/output/"
+    indir = options.indir
+    outdir = options.outdir
+    fc_dl1 = options.fc_dl1
+    fc_dl1r = options.fc_dl1r
+    jet_flavors = options.jet_flavors
+    files = options.dataset
+
     treename = "bTag_AntiKt4EMPFlowJets_BTagging201903"
-    fc_dl1 = 0.018
-    fc_dl1r = 0.018
+
+    #minor script options - can be modified
     dl1_bound = [-5,4]
     nbins = 20
-
     W_list = [1.0, 1.05, 1.1, 1.15, 1.2, 1.25]
     maxfiles = -1
 
@@ -35,23 +40,28 @@ def main(argv):
     parser.add_argument("-d", "--dataset", type=str, required=True, dest="dataset", help="ttbar or zp")
     args = parser.parse_args()
 
-    files = args.dataset
-
     if files == "ttbar":
-        nomdir = "user.jmwagner.410470.qual_tt_nom_10_Akt4EMPf_BTagging201903/"
-        ovdir = "user.jmwagner.410470.qual_tt_ov_3_Akt4EMPf_BTagging201903/"
-        ibldir = "user.jmwagner.410470.qual_tt_ibl_4_Akt4EMPf_BTagging201903/"
-        pp0dir = "user.jmwagner.410470.qual_tt_pp0_3_Akt4EMPf_BTagging201903/"
+        dataset_string = "t#bar{t}"
     elif files == "zp":
-        nomdir = "user.jmwagner.800030.qual_zp_nom_10_Akt4EMPf_BTagging201903/"
-        ovdir = "user.jmwagner.800030.qual_zp_ov_3_Akt4EMPf_BTagging201903/"
-        ibldir = "user.jmwagner.800030.qual_zp_ibl_3_Akt4EMPf_BTagging201903/"
-        pp0dir = "user.jmwagner.800030.qual_zp_pp0_3_Akt4EMPf_BTagging201903/"
+        dataset_string = "Z'"
 
-    nomfiles = glob.glob(indir+nomdir+'*')[:maxfiles]
-    ovfiles = glob.glob(indir+ovdir+'*')[:maxfiles]
-    iblfiles = glob.glob(indir+ibldir+'*')[:maxfiles]
-    pp0files = glob.glob(indir+pp0dir+'*')[:maxfiles]
+    nomfiles = glob.glob(indir+"Nominal/"+'*')[:maxfiles]
+    ovfiles = glob.glob(indir+"Overall/"+'*')[:maxfiles]
+    iblfiles = glob.glob(indir+"IBL/"+'*')[:maxfiles]
+    pp0files = glob.glob(indir+"PP0/"+'*')[:maxfiles]
+
+    if jet_flavors == "l":
+        flavor_cut = "&&jet_LabDr_HadF!=4&&jet_LabDr_HadF!=5"
+        appendix = "_l"
+    elif jet_flavors == "b":
+        flavor_cut = "&&jet_LabDr_HadF==5"
+        appendix = "_b"
+    elif jet_flavors == "c":
+        flavor_cut = "&&jet_LabDr_HadF==4"
+        appendix = "_c"
+    else:
+        flavor_cut = ""
+        appendix = ""
 
     nomchain = TChain(treename)
     ovchain = TChain(treename)
@@ -65,6 +75,8 @@ def main(argv):
         for ifile in infile_list:
             chain.AddFile(ifile)
 
+    print(nomchain.GetEntries(), ovchain.GetEntries())
+
     ov_chi2 = []
     ibl_chi2 = []
     pp0_chi2 = []
@@ -73,7 +85,7 @@ def main(argv):
 
     for W in W_list:
         print("Working on W = "+str(W))
-        general_cut = "(jet_pt>20e3)&&(fabs(jet_eta)<2.5)"
+        general_cut = "(jet_pt>20e3)&&(fabs(jet_eta)<2.5)"+flavor_cut
         jet_weight_dl1 = "pow("+str(W)+",Sum$(jet_trk_barcode>200000))"
         jet_weight_dl1r = "pow("+str(W)+",Sum$(jet_trk_barcode>200000))"
 
@@ -107,16 +119,12 @@ def main(argv):
         ibl_nosec_hist.Scale(1/ibl_nosec_hist.Integral("width"))
         pp0_nosec_hist.Scale(1/pp0_nosec_hist.Integral("width"))
 
-        plot_hist(canv, [ov_dl1_hist, ibl_dl1_hist, pp0_dl1_hist, nom_dl1_hist], ["ov", "ibl", "pp0", "nom"], 3, False, False, outdir+"dl1_hist_"+str(round(W*1000))+".png")
-        plot_hist(canv, [ov_nosec_hist, ibl_nosec_hist, pp0_nosec_hist, nom_nosec_hist], ["ov", "ibl", "pp0", "nom"], 3, False, False, outdir+"nosec_hist_"+str(round(W*1000))+".png")
+        plot_hist(canv, [ov_dl1_hist, ibl_dl1_hist, pp0_dl1_hist, nom_dl1_hist], ["ov", "ibl", "pp0", "nom"], 3, dataset_string, False, False, outdir+"dl1_hist_"+str(round(W*1000))+appendix+".pdf")
+        plot_hist(canv, [ov_nosec_hist, ibl_nosec_hist, pp0_nosec_hist, nom_nosec_hist], ["ov", "ibl", "pp0", "nom"], 3, dataset_string, False, False, outdir+"nosec_hist_"+str(round(W*1000))+appendix+".pdf")
 
         ov_chi2.append(ov_dl1_hist.Chi2Test(nom_dl1_hist, "WW"))
         ibl_chi2.append(ibl_dl1_hist.Chi2Test(nom_dl1_hist, "WW"))
         pp0_chi2.append(pp0_dl1_hist.Chi2Test(nom_dl1_hist, "WW"))
-
-        print(ov_dl1_hist.Chi2Test(nom_dl1_hist, "WW"))
-        print(ibl_dl1_hist.Chi2Test(nom_dl1_hist, "WW"))
-        print(pp0_dl1_hist.Chi2Test(nom_dl1_hist, "WW"))
 
         nom_dl1_hist.Reset()
         gDirectory.GetList().Remove(nom_dl1_hist)
@@ -145,14 +153,14 @@ def main(argv):
         del pp0_nosec_hist
     
     plt.figure()
-    plt.plot(W_list, ov_chi2, label="ov")
-    plt.plot(W_list, ibl_chi2, label="ibl")
-    plt.plot(W_list, pp0_chi2, label="pp0")
+    plt.plot(W_list, ov_chi2, label="+5% overall")
+    plt.plot(W_list, ibl_chi2, label="+10% IBL")
+    plt.plot(W_list, pp0_chi2, label="+25% PP0")
     plt.xlabel("weight")
     plt.ylabel("p-value")
     plt.yscale("log")
     plt.legend()
-    plt.savefig(outdir+"weights.png")
+    plt.savefig(outdir+"weights"+appendix+".pdf")
 
 
 if __name__ == '__main__':

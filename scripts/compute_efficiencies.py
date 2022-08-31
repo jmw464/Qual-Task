@@ -6,12 +6,13 @@ import h5py
 import argparse
 from ROOT import gROOT, TFile, TH1D, TLorentzVector, TCanvas, TTree, gDirectory, TChain, TH2D, gPad
 
-#set ATLAS style for plots
-gROOT.LoadMacro("/global/homes/j/jmw464/ATLAS/Vertex-GNN/scripts/include/AtlasStyle.C")
-gROOT.LoadMacro("/global/homes/j/jmw464/ATLAS/Vertex-GNN/scripts/include/AtlasLabels.C")
-from ROOT import SetAtlasStyle
-
 from plot_functions import *
+import options
+
+#set ATLAS style for plots
+gROOT.LoadMacro(options.atlasstyle_dir+"AtlasStyle.C")
+gROOT.LoadMacro(options.atlasstyle_dir+"AtlasLabels.C")
+from ROOT import SetAtlasStyle
 
 
 def convert_wp(wp):
@@ -32,20 +33,20 @@ def main(argv):
     gROOT.SetBatch(True)
     SetAtlasStyle()
 
-    indir = "/global/cfs/cdirs/atlas/jmw464/qual_data/"
-    outdir = "/global/homes/j/jmw464/ATLAS/Qual-Task/output/"
+    indir = options.indir 
+    outdir = options.outdir
+    fc_dl1 = options.fc_dl1
+    fc_dl1r = options.fc_dl1r
+    files = options.dataset
+
     treename = "bTag_AntiKt4EMPFlowJets_BTagging201903"
-    fc_dl1 = 0.018
-    fc_dl1r = 0.018
     
     #parse command line arguments
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-d", "--dataset", type=str, required=True, dest="dataset", help="ttbar or zp")
     parser.add_argument("-w", "--wp", type=float, required=True, dest="eff_wp", help="0.6, 0.7, 0.77 or 0.85")
     parser.add_argument("-v", "--xvar", type=str, required=True, dest="xvar", help="pt_high, pt_low or eta")
     args = parser.parse_args()
 
-    files = args.dataset
     xvar = args.xvar
     eff_wp = args.eff_wp
 
@@ -53,15 +54,9 @@ def main(argv):
     wp_ext = str(eff_wp*100)[:2]
     
     if files == "ttbar":
-        nomdir = "user.jmwagner.410470.qual_tt_nom_10_Akt4EMPf_BTagging201903/"
-        ovdir = "user.jmwagner.410470.qual_tt_ov_3_Akt4EMPf_BTagging201903/"
-        ibldir = "user.jmwagner.410470.qual_tt_ibl_4_Akt4EMPf_BTagging201903/"
-        pp0dir = "user.jmwagner.410470.qual_tt_pp0_3_Akt4EMPf_BTagging201903/"
+        dataset_string = "t#bar{t}, WP = "+str(eff_wp)
     elif files == "zp":
-        nomdir = "user.jmwagner.800030.qual_zp_nom_10_Akt4EMPf_BTagging201903/"
-        ovdir = "user.jmwagner.800030.qual_zp_ov_3_Akt4EMPf_BTagging201903/"
-        ibldir = "user.jmwagner.800030.qual_zp_ibl_3_Akt4EMPf_BTagging201903/"
-        pp0dir = "user.jmwagner.800030.qual_zp_pp0_3_Akt4EMPf_BTagging201903/"
+        dataset_string = "Z', WP = "+str(eff_wp)
 
     if xvar == "pt_high":
         xlabel = "jet pT [GeV]"
@@ -89,10 +84,10 @@ def main(argv):
         xvar = "jet_eta"
         ext = files+"_"+wp_ext+"_eta"
 
-    nomfiles = glob.glob(indir+nomdir+'*')
-    ovfiles = glob.glob(indir+ovdir+'*')
-    iblfiles = glob.glob(indir+ibldir+'*')
-    pp0files = glob.glob(indir+pp0dir+'*')
+    nomfiles = glob.glob(indir+'Nominal/'+'*')
+    ovfiles = glob.glob(indir+'Overall/'+'*')
+    iblfiles = glob.glob(indir+'IBL/'+'*')
+    pp0files = glob.glob(indir+'PP0/'+'*')
 
     nomchain = TChain(treename)
     ovchain = TChain(treename)
@@ -193,12 +188,12 @@ def main(argv):
 
     canv = TCanvas("c1", "c1",200,10,900,900)
 
-    plot_profile(canv, bjet_eff_dl1_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, eff_wp, outdir+'prof_bjet_eff_dl1_'+ext+'.png')
-    plot_profile(canv, cjet_eff_dl1_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, eff_wp, outdir+'prof_cjet_eff_dl1_'+ext+'.png')
-    plot_profile(canv, ljet_eff_dl1_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, eff_wp, outdir+'prof_ljet_eff_dl1_'+ext+'.png')
-    plot_profile(canv, bjet_eff_dl1r_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, eff_wp, outdir+'prof_bjet_eff_dl1r_'+ext+'.png')
-    plot_profile(canv, cjet_eff_dl1r_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, eff_wp, outdir+'prof_cjet_eff_dl1r_'+ext+'.png')
-    plot_profile(canv, ljet_eff_dl1r_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, eff_wp, outdir+'prof_ljet_eff_dl1r_'+ext+'.png')
+    plot_profile(canv, bjet_eff_dl1_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, outdir+'prof_bjet_eff_dl1_'+ext+'.pdf')
+    plot_profile(canv, cjet_eff_dl1_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, outdir+'prof_cjet_eff_dl1_'+ext+'.pdf')
+    plot_profile(canv, ljet_eff_dl1_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, outdir+'prof_ljet_eff_dl1_'+ext+'.pdf')
+    plot_profile(canv, bjet_eff_dl1r_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, outdir+'prof_bjet_eff_dl1r_'+ext+'.pdf')
+    plot_profile(canv, cjet_eff_dl1r_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, outdir+'prof_cjet_eff_dl1r_'+ext+'.pdf')
+    plot_profile(canv, ljet_eff_dl1r_proflist, ['+5% overall', '+10% IBL', '+25% PP0', 'nominal'], 3, dataset_string, outdir+'prof_ljet_eff_dl1r_'+ext+'.pdf')
 
 
 if __name__ == '__main__':
