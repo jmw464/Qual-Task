@@ -26,29 +26,24 @@ def main(argv):
     fc_dl1r = options.fc_dl1r
     jet_flavors = options.jet_flavors
     files = options.dataset
-
+    
     treename = "bTag_AntiKt4EMPFlowJets_BTagging201903"
 
     #minor script options - can be modified
     dl1_bound = [-5,4]
     nbins = 20
     W_list = [1.0, 1.05, 1.1, 1.15, 1.2, 1.25]
-    maxfiles = -1
-
-    #parse command line arguments
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-d", "--dataset", type=str, required=True, dest="dataset", help="ttbar or zp")
-    args = parser.parse_args()
+    maxfiles = 5
 
     if files == "ttbar":
         dataset_string = "t#bar{t}"
     elif files == "zp":
         dataset_string = "Z'"
 
-    nomfiles = glob.glob(indir+"Nominal/"+'*')[:maxfiles]
-    ovfiles = glob.glob(indir+"Overall/"+'*')[:maxfiles]
-    iblfiles = glob.glob(indir+"IBL/"+'*')[:maxfiles]
-    pp0files = glob.glob(indir+"PP0/"+'*')[:maxfiles]
+    nomfiles = glob.glob(indir+files+"/Nominal/"+'*')[:maxfiles]
+    ovfiles = glob.glob(indir+files+"/Overall/"+'*')[:maxfiles]
+    iblfiles = glob.glob(indir+files+"/IBL/"+'*')[:maxfiles]
+    pp0files = glob.glob(indir+files+"/PP0/"+'*')[:maxfiles]
 
     if jet_flavors == "l":
         flavor_cut = "&&jet_LabDr_HadF!=4&&jet_LabDr_HadF!=5"
@@ -74,8 +69,6 @@ def main(argv):
         infile_list = infile_lists[i]
         for ifile in infile_list:
             chain.AddFile(ifile)
-
-    print(nomchain.GetEntries(), ovchain.GetEntries())
 
     ov_chi2 = []
     ibl_chi2 = []
